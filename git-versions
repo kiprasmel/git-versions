@@ -1,0 +1,46 @@
+#!/bin/sh
+
+FILEPATH="$1"
+OUTDIR="${2:-versions}"
+
+[ -z "$FILEPATH" ] && {
+	printf "provide filepath.\n"
+	exit 1
+}
+
+[ ! -d "$OUTDIR" ] && {
+	mkdir -p "$OUTDIR"
+}
+
+COMMITS="$(git log --pretty=format:'%H' "$FILEPATH")"
+COMMIT_LEN="$(printf "$COMMITS" | wc -l)"
+COMMIT_LEN_WIDTH="$(printf "$COMMIT_LEN" | wc -c)"
+
+# iterate in reverse, because commits are in reverse order.
+i=$COMMIT_LEN
+IFS=$'\n'
+for COMMIT in $COMMITS; do
+	# get left padding of '0's,
+	# so that order of filenames is kept w/o breaking.
+	#
+	# e.g. 001, 002, ..., 010, 011, 012, ..., 100, 101, 102,
+	# instead of 1, 2, ..., 10, 11, 12, ... 100, 101, 102.
+	I_WIDTH="$(printf "$i" | wc -c)"
+	LEFT_PADDING_WIDTH="$(($COMMIT_LEN_WIDTH - $I_WIDTH))"
+	if [ $LEFT_PADDING_WIDTH -eq 0 ]; then
+		LEFT_PAD=""
+	else
+		# https://stackoverflow.com/a/5349842/9285308
+		LEFT_PAD="$(printf '0%.0s' {0..$LEFT_PADDING_WIDTH})"
+	fi
+	NTH="${LEFT_PAD}${i}"
+
+	FILENAME="$(basename "$FILEPATH")"
+	OUTFILE="$NTH.$COMMIT.$FILENAME"
+	OUTFILEPATH="$OUTDIR/$OUTFILE"
+
+	git show "$COMMIT:$FILEPATH" > "$OUTFILEPATH"
+	
+	i=$((i - 1))
+done
+
