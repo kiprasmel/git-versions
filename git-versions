@@ -3,6 +3,8 @@
 FILEPATH="$1"
 OUTDIR="${2:-versions}"
 
+QUIET="${QUIET:-0}"
+
 [ -z "$FILEPATH" ] && {
 	printf "provide filepath.\n"
 	exit 1
@@ -40,6 +42,10 @@ for COMMIT in $COMMITS; do
 	OUTFILEPATH="$OUTDIR/$OUTFILE"
 
 	git show "$COMMIT:$FILEPATH" > "$OUTFILEPATH"
+
+	[ "$QUIET" -eq 0 ] && {
+		printf "$OUTFILEPATH\n"
+	}
 	
 	i=$((i - 1))
 done
