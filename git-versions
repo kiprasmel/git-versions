@@ -5,6 +5,9 @@ OUTDIR="${2:-versions}"
 
 QUIET="${QUIET:-0}"
 
+# flags. see source code below.
+#GIT_VERSIONS_ARG_NO_OVERWRITE_IF_EXISTS=0
+
 [ -z "$FILEPATH" ] && {
 	printf "provide filepath.\n"
 	exit 1
@@ -41,7 +44,12 @@ for COMMIT in $COMMITS; do
 	OUTFILE="$NTH.$COMMIT.$FILENAME"
 	OUTFILEPATH="$OUTDIR/$OUTFILE"
 
-	git show "$COMMIT:$FILEPATH" > "$OUTFILEPATH"
+	if [ -n "$GIT_VERSIONS_ARG_NO_OVERWRITE_IF_EXISTS" ] && [ -f "$OUTFILEPATH" ]; then
+		# do not overwrite existing file
+		:
+	else
+		git show "$COMMIT:$FILEPATH" > "$OUTFILEPATH"
+	fi
 
 	[ "$QUIET" -eq 0 ] && {
 		printf "$OUTFILEPATH\n"
